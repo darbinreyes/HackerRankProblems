@@ -377,16 +377,16 @@ CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAP
 
       if(grid[vertexlabel]) {
         // connect this vertex with its neighbors. // assume you cant move diagonally.
-        if(i-1 >= 0){
+        if(i-1 >= 0){ //1
           AddNeighbor(grid, N, i-1, j, &Vertices[vertexlabel], Vertices);
         }
-        if(i+1 < N){
+        if(i+1 < N){ //2
           AddNeighbor(grid, N, i+1, j, &Vertices[vertexlabel], Vertices);
         }
-        if(j-1 >= 0){
+        if(j-1 >= 0){ //3
           AddNeighbor(grid, N, i, j-1, &Vertices[vertexlabel], Vertices);
         }
-        if(j+1 < N){
+        if(j+1 < N){ //4
           AddNeighbor(grid, N, i, j+1, &Vertices[vertexlabel], Vertices);
         }
       }
@@ -443,10 +443,11 @@ TestPriorityQueue(void){
   LIST List = {0};
   LIST_NODE *Node;
   int i;
-  int a[6] = {7,5,34,2,1,0};
+  #define ARRAY_SIZE 8
+  int a[ARRAY_SIZE] = {0,7,5,34,1,2,1,0};
   int *Data;
 
-  for(i=0; i< 6; i++){
+  for(i=0; i< ARRAY_SIZE; i++){
     ListInsertSorted(&List, NewListNode(&a[i], a[i]));
   }
 
@@ -692,12 +693,12 @@ PrintPath(int N, int *grid, LIST *Path){
       Point.x = i;
       Point.y = j;
       if(IsPointInPath(&Point, Path)){
-        printf("*");
+        printf("#");
       } else {
         if(grid[i*N+j])
           printf(".");
         else
-          printf("X");
+          printf("X"); // X
       }
 
     }
@@ -766,7 +767,23 @@ void
 SortByCost(v neighbors, numneighbors);
 
 
-// testc 2 answer = 13
+// testcase 2 answer = 13, my computation is 15.
+
+###############################
+
+Debugging...
+
+Theories.
+
+-We need a modified cheapest path algo. since the cost of next edge is not fixed, it depends on the previous edge along the current path.
+
+-There is a bug in my cheapest path algo.
+
+-My step count logic is off.
+
+-Found a way to shave off one step in test5.txt. Go down from origin.
+
+-Next: step through cheapest path algo. on paper to spot bug.
 **/
 
 int
