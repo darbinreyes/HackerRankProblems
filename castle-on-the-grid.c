@@ -334,6 +334,40 @@ NewVertex(void *Label) {
 
   return Vertex;
 }
+void
+PrintPoint(POINT *Point) {
+  if(Point == NULL)
+    return;
+
+  printf("(%d,%d)",Point->x, Point->y);
+}
+
+// Prints the entries in List from head to tail. The data in the list nodes must be a pointer to a PRIORITY_QUEUE_ENTRY.
+void
+PrintPQEntries(LIST *List)
+{
+  LIST_NODE            *Node;
+  PRIORITY_QUEUE_ENTRY *PQEntry;
+
+  if(IsEmpty(List)){
+    printf("Empty List.\n");
+    return;
+  }
+
+  for(Node = List->Head; Node != NULL; Node = Node->Next) {
+    PQEntry = Node->Data;
+    printf("[");
+    PrintPoint(PQEntry->Vertex->Label);
+    printf("|c=%d|p=%d|", PQEntry->Cost, Node->Priority); // todo: check the cost stored in vertex?
+    if(PQEntry->PrevVertex != NULL) // PrevVertex can be NULL when the first vertex has no predecessor.
+      PrintPoint(PQEntry->PrevVertex->Label);
+    else
+      printf("(NULL)");
+    printf("]->");
+  }
+
+  printf("\n");
+}
 
 // adds a neighbor (i,j) vertex if (i,j) is not a forbidden cell.
 int
@@ -536,15 +570,24 @@ GetStepCost(VERTEX *a,VERTEX *b,VERTEX *c) { // a = frontVertex.PrevVertex, b = 
   POINT slope0, slope1;
 
   if(a == NULL && b == NULL && c != NULL) {
+    // should not occur
     printf("GetStepCost() b c null.\n");
     return 0;
   }
 
   if(a == NULL && b != NULL && c != NULL) {
-    return 1;
+    // b and c are diff. +1, if equal +0
+    return !IsPointsEqual(b->Label, c->Label);
   }
 
   if(a != NULL && b != NULL && c != NULL) {
+
+
+    // PrintPoint(a->Label);
+    // PrintPoint(b->Label);
+    // PrintPoint(c->Label);
+    // printf("\n");
+
     GetSlope(a->Label, b->Label, &slope0);
     GetSlope(b->Label, c->Label, &slope1);
     return !IsPointsEqual(&slope0, &slope1);
@@ -616,9 +659,11 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
   PQEntry = NewPriorityQueueEntry(NULL, TmpCost, startVertex);
 
   PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
+
   // todo: add asserts where needed. e.g. for alloc fails.
 
   while(!done && !IsEmpty(&vertexQueue)){
+    PrintPQEntries(&vertexQueue); // debugging.
     PQEntry = Dequeue(&vertexQueue);
     frontVertex = PQEntry->Vertex;
 
@@ -645,6 +690,8 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
             TmpCost += frontVertex->PathCost;
             PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
             PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
+          } else {
+            //
           }
 
           neighborIndex++;
@@ -668,6 +715,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
 }
 
+// TRUE if TestPoint is among the list of points in Path.
 int
 IsPointInPath(POINT *TestPoint, LIST *Path){
   LIST_NODE *Node;
@@ -685,6 +733,7 @@ IsPointInPath(POINT *TestPoint, LIST *Path){
   return 0;
 }
 
+// Prints the grid and marks all points along the path.
 void
 PrintPath(int N, int *grid, LIST *Path){
   POINT     Point;
@@ -784,6 +833,7 @@ Theories.
 -Found a way to shave off one step in test5.txt. Go down from origin.
 
 -Next: step through cheapest path algo. on paper to spot bug.
+We never go thrugh 1,2 2,2 3,2 for test6
 **/
 
 int
