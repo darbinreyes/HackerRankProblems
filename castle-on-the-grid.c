@@ -176,7 +176,7 @@ ListInsertSorted(LIST *List, LIST_NODE *Node) {
     return 0;
   }
 
-  for(NodeBefore = NULL, NodeAfter = List->Head; NodeAfter != NULL && Node->Priority > NodeAfter->Priority; NodeBefore = NodeAfter, NodeAfter = NodeAfter->Next){
+  for(NodeBefore = NULL, NodeAfter = List->Head; NodeAfter != NULL && Node->Priority >= NodeAfter->Priority; NodeBefore = NodeAfter, NodeAfter = NodeAfter->Next){
     ;
   }
 
