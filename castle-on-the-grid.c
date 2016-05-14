@@ -411,16 +411,16 @@ CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAP
 
       if(grid[vertexlabel]) {
         // connect this vertex with its neighbors. // assume you cant move diagonally.
-        if(i-1 >= 0){ //1
+        if(i-1 >= 0){ //  neighbor below
           AddNeighbor(grid, N, i-1, j, &Vertices[vertexlabel], Vertices);
         }
-        if(i+1 < N){ //2
+        if(i+1 < N){ // neighbor above
           AddNeighbor(grid, N, i+1, j, &Vertices[vertexlabel], Vertices);
         }
-        if(j-1 >= 0){ //3
+        if(j-1 >= 0){ // neighbor to left
           AddNeighbor(grid, N, i, j-1, &Vertices[vertexlabel], Vertices);
         }
-        if(j+1 < N){ //4
+        if(j+1 < N){ // neighbor to right
           AddNeighbor(grid, N, i, j+1, &Vertices[vertexlabel], Vertices);
         }
       }
@@ -683,15 +683,13 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
         while(neighborIndex < frontVertex->NumNeighbors) {
 
           nextNeighbor = frontVertex->Neighbors[neighborIndex];
-          // todo: getStepCost(v a, v b, v c); // a = frontVertex.PrevVertex, b = frontVertex, c = some neighbor of frontVertex.
+
           TmpCost = GetStepCost(frontVertex->previousVertex, frontVertex, nextNeighbor);
 
           if(!nextNeighbor->IsVisited){
             TmpCost += frontVertex->PathCost;
             PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
             PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
-          } else {
-            //
           }
 
           neighborIndex++;
