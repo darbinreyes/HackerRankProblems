@@ -339,7 +339,7 @@ PrintPoint(POINT *Point) {
   if(Point == NULL)
     return;
 
-  printf("(%d,%d)",Point->x, Point->y);
+  printf("(%d,%d)",Point->x+1, Point->y+1);
 }
 
 // Prints the entries in List from head to tail. The data in the list nodes must be a pointer to a PRIORITY_QUEUE_ENTRY.
