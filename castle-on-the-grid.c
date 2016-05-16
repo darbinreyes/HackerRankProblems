@@ -372,7 +372,7 @@ PrintPQEntries(LIST *List)
 // adds a neighbor (i,j) vertex if (i,j) is not a forbidden cell.
 int
 AddNeighbor(int *grid,  int N, int i, int j, VERTEX *Vertex, VERTEX *Vertices) {
-  int NeighborLabel;
+  int NeighborLabel; // TODO: Rename to NeighborIndex.
 
   // invalid neighbor label.
   if(i < 0 || i >= N)
@@ -381,14 +381,12 @@ AddNeighbor(int *grid,  int N, int i, int j, VERTEX *Vertex, VERTEX *Vertices) {
   if(j < 0 || j >= N)
     return 1;
 
+  NeighborLabel = i*N + j; // Compute neighbor index from its x,y position in the grid.
 
-
-  NeighborLabel = i*N + j;
-
-  if(!grid[NeighborLabel])
+  if(grid[NeighborLabel] == 0) // grid[NeighborLabel] == 0, this neighbor is a forbidden cell. Don't add this cell as neighbor to Vertex.
     return 1;
 
-  Vertex->Neighbors[Vertex->NumNeighbors++] = &Vertices[NeighborLabel];
+  Vertex->Neighbors[Vertex->NumNeighbors++] = &Vertices[NeighborLabel]; // add neighbor
 
   return 0;
 }
@@ -396,7 +394,7 @@ AddNeighbor(int *grid,  int N, int i, int j, VERTEX *Vertex, VERTEX *Vertices) {
 // creates a graph based on grid.
 int
 CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAPH  *GridGraph) {
-  int i, j, vertexlabel;
+  int i, j, vertexlabel; // TODO: rename to VertexIndex
 
   for(i = 0; i < N; i++){
     for(j = 0; j < N; j++) {
@@ -411,10 +409,10 @@ CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAP
 
       if(grid[vertexlabel]) {
         // connect this vertex with its neighbors. // assume you cant move diagonally.
-        if(i-1 >= 0){ //  neighbor below
+        if(i-1 >= 0){ //  neighbor above
           AddNeighbor(grid, N, i-1, j, &Vertices[vertexlabel], Vertices);
         }
-        if(i+1 < N){ // neighbor above
+        if(i+1 < N){ // neighbor below
           AddNeighbor(grid, N, i+1, j, &Vertices[vertexlabel], Vertices);
         }
         if(j-1 >= 0){ // neighbor to left
@@ -653,7 +651,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
   PRIORITY_QUEUE_ENTRY *PQEntry;
 
   startVertex = &graph->Vertices[startPoint->x*N+startPoint->y];
-  endVertex = &graph->Vertices[endPoint->x*N+endPoint->y];
+  endVertex = &graph->Vertices[endPoint->x*N+endPoint->y]; // this index expression should be simpler.
 
   TmpCost = 0;
   PQEntry = NewPriorityQueueEntry(NULL, TmpCost, startVertex);
@@ -686,7 +684,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
           TmpCost = GetStepCost(frontVertex->previousVertex, frontVertex, nextNeighbor);
 
-          if(!nextNeighbor->IsVisited){
+          if(!nextNeighbor->IsVisited) {
             TmpCost += frontVertex->PathCost;
             PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
             PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
