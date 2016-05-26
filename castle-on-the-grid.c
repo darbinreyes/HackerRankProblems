@@ -661,7 +661,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
   // todo: add asserts where needed. e.g. for alloc fails.
 
   while(!done && !IsEmpty(&vertexQueue)){
-    PrintPQEntries(&vertexQueue); // debugging.
+    //PrintPQEntries(&vertexQueue); // debugging.
     PQEntry = Dequeue(&vertexQueue);
     frontVertex = PQEntry->Vertex;
 
@@ -697,8 +697,6 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
     }
   }
-  // todo: free queue nodes mem.
-  printf("endv cost %d\n", endVertex->PathCost);
 
   // Add each vertex along the path to the pathStack starting from the end to the beginning.
 
