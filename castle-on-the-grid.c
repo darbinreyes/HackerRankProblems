@@ -641,6 +641,17 @@ GetShortestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
   }
 
 }
+void
+ResetVertices(GRAPH *Graph) {
+  if(Graph)
+    return;
+
+  for(int i = 0; i < Graph->NumVertices; i++) {
+    Graph->Vertices[i].IsVisited = 0;
+    Graph->Vertices[i].PathCost = 0;
+    Graph->Vertices[i].previousVertex = NULL;
+  }
+}
 
 void
 GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *pathStack){
