@@ -374,17 +374,18 @@ int
 AddNeighbor(int *grid,  int N, int i, int j, VERTEX *Vertex, VERTEX *Vertices) {
   int NeighborLabel; // TODO: Rename to NeighborIndex.
 
-  // invalid neighbor label.
-  if(i < 0 || i >= N)
-    return 1;
 
-  if(j < 0 || j >= N)
+  if(i < 0 || i >= N || j < 0 || j >= N) { // invalid neighbor index.
+    Vertex->Neighbors[Vertex->NumNeighbors++] = NULL;
     return 1;
+  }
 
   NeighborLabel = i*N + j; // Compute neighbor index from its x,y position in the grid.
 
-  if(grid[NeighborLabel] == 0) // grid[NeighborLabel] == 0, this neighbor is a forbidden cell. Don't add this cell as neighbor to Vertex.
+  if(grid[NeighborLabel] == 0) {// grid[NeighborLabel] == 0, this neighbor is a forbidden cell. Don't add this cell as neighbor to Vertex.
+    Vertex->Neighbors[Vertex->NumNeighbors++] = NULL;
     return 1;
+  }
 
   Vertex->Neighbors[Vertex->NumNeighbors++] = &Vertices[NeighborLabel]; // add neighbor
 
@@ -409,18 +410,19 @@ CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAP
 
       if(grid[vertexlabel]) {
         // connect this vertex with its neighbors. // assume you cant move diagonally.
-        if(i-1 >= 0){ //  neighbor above
-          AddNeighbor(grid, N, i-1, j, &Vertices[vertexlabel], Vertices);
-        }
-        if(i+1 < N){ // neighbor below
-          AddNeighbor(grid, N, i+1, j, &Vertices[vertexlabel], Vertices);
-        }
-        if(j-1 >= 0){ // neighbor to left
-          AddNeighbor(grid, N, i, j-1, &Vertices[vertexlabel], Vertices);
-        }
-        if(j+1 < N){ // neighbor to right
-          AddNeighbor(grid, N, i, j+1, &Vertices[vertexlabel], Vertices);
-        }
+
+        //  neighbor above
+        AddNeighbor(grid, N, i-1, j, &Vertices[vertexlabel], Vertices);
+
+         // neighbor below
+        AddNeighbor(grid, N, i+1, j, &Vertices[vertexlabel], Vertices);
+
+         // neighbor to left
+        AddNeighbor(grid, N, i, j-1, &Vertices[vertexlabel], Vertices);
+
+         // neighbor to right
+        AddNeighbor(grid, N, i, j+1, &Vertices[vertexlabel], Vertices);
+
       }
     }
   }
@@ -643,7 +645,7 @@ GetShortestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 }
 void
 ResetVertices(GRAPH *Graph) {
-  if(Graph)
+  if(Graph == NULL)
     return;
 
   for(int i = 0; i < Graph->NumVertices; i++) {
@@ -654,13 +656,12 @@ ResetVertices(GRAPH *Graph) {
 }
 
 void
-GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *pathStack){
+GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *pathStack, const int NeighborOrder[4]){
   LIST vertexQueue = {0};
   int done = 0, TmpCost = 0;
   int neighborIndex;
   VERTEX *startVertex, *endVertex, *frontVertex, *nextNeighbor;
   PRIORITY_QUEUE_ENTRY *PQEntry;
-
   startVertex = &graph->Vertices[startPoint->x*N+startPoint->y];
   endVertex = &graph->Vertices[endPoint->x*N+endPoint->y]; // this index expression should be simpler.
 
@@ -691,7 +692,12 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
         while(neighborIndex < frontVertex->NumNeighbors) {
 
-          nextNeighbor = frontVertex->Neighbors[neighborIndex];
+          nextNeighbor = frontVertex->Neighbors[NeighborOrder[neighborIndex]];
+
+          if(nextNeighbor == NULL){
+            neighborIndex++;
+            continue;
+          }
 
           TmpCost = GetStepCost(frontVertex->previousVertex, frontVertex, nextNeighbor);
 
@@ -760,6 +766,11 @@ PrintPath(int N, int *grid, LIST *Path){
   }
 }
 
+static const int NeighborOrderA[] = {0,3,2,1};
+static const int NeighborOrderB[] = {1,3,2,0};
+static const int NeighborOrderL[] = {2,3,1,0};
+static const int NeighborOrderR[] = {3,1,2,0};
+
 int
 CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
   LIST pathStack = {0};
@@ -777,9 +788,25 @@ CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
 
   // find shortest path.
   //GetShortestPath(&GridGraph, N, start, end, &pathStack);
-  GetCheapestPath(&GridGraph, N, start, end, &pathStack);
-  PrintPath(N, grid, &pathStack);
 
+  // Above
+  GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderA);
+  //PrintPath(N, grid, &pathStack);
+  printf("%d\n", GetNumPathSteps(&pathStack));
+
+  ResetVertices(&GridGraph);
+  GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderB);
+  //PrintPath(N, grid, &pathStack);
+  printf("%d\n", GetNumPathSteps(&pathStack));
+
+  ResetVertices(&GridGraph);
+  GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderL);
+  //PrintPath(N, grid, &pathStack);
+  printf("%d\n", GetNumPathSteps(&pathStack));
+
+  ResetVertices(&GridGraph);
+  GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderR);
+  //PrintPath(N, grid, &pathStack);
   printf("%d\n", GetNumPathSteps(&pathStack));
 
   // todo: free mem.
