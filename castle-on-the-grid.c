@@ -766,13 +766,15 @@ PrintPath(int N, int *grid, LIST *Path){
   }
 }
 
-static const int NeighborOrderA[] = {0,3,2,1};
-static const int NeighborOrderB[] = {1,3,2,0};
-static const int NeighborOrderL[] = {2,3,1,0};
-static const int NeighborOrderR[] = {3,1,2,0};
-
 int
 CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
+  static const int NeighborOrderA[] = {0,3,2,1}; // assume the first neighbor visited determines the resulting path found. There are 24 possible neighbor orders. We are only trying 4 of these.
+  static const int NeighborOrderB[] = {1,3,2,0};
+  static const int NeighborOrderL[] = {2,3,1,0};
+  static const int NeighborOrderR[] = {3,1,2,0};
+  int minsteps = 0x0FFFFFFF;
+  int numsteps;
+
   LIST pathStack = {0};
   // Plan: Create a graph from the input grid and apply shortest/cheapest path algorithm
   GRAPH  GridGraph = {0};
@@ -786,28 +788,45 @@ CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
   // Create the graph.
   CreateGraphFromGrid(grid, N, GridPoints, Vertices, &GridGraph);
 
-  // find shortest path.
-  //GetShortestPath(&GridGraph, N, start, end, &pathStack);
-
-  // Above
+  // Find the cheapest path
   GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderA);
   //PrintPath(N, grid, &pathStack);
-  printf("%d\n", GetNumPathSteps(&pathStack));
+  numsteps = GetNumPathSteps(&pathStack);
+
+  if(numsteps < minsteps)
+    minsteps = numsteps;
+
+  //printf("%d\n", numsteps);
 
   ResetVertices(&GridGraph);
   GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderB);
   //PrintPath(N, grid, &pathStack);
-  printf("%d\n", GetNumPathSteps(&pathStack));
+  numsteps = GetNumPathSteps(&pathStack);
+
+  if(numsteps < minsteps)
+    minsteps = numsteps;
+
+  //printf("%d\n", numsteps);
 
   ResetVertices(&GridGraph);
   GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderL);
   //PrintPath(N, grid, &pathStack);
-  printf("%d\n", GetNumPathSteps(&pathStack));
+  numsteps = GetNumPathSteps(&pathStack);
+
+  if(numsteps < minsteps)
+    minsteps = numsteps;
+
+  //printf("%d\n", numsteps);
 
   ResetVertices(&GridGraph);
   GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderR);
   //PrintPath(N, grid, &pathStack);
-  printf("%d\n", GetNumPathSteps(&pathStack));
+  numsteps = GetNumPathSteps(&pathStack);
+
+  if(numsteps < minsteps)
+    minsteps = numsteps;
+
+  printf("%d\n", minsteps);
 
   // todo: free mem.
 
