@@ -656,7 +656,7 @@ ResetVertices(GRAPH *Graph) {
 }
 
 void
-GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *pathStack, const int NeighborOrder[4]){
+GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *pathStack){
   LIST vertexQueue = {0};
   int done = 0, TmpCost = 0;
   int neighborIndex;
@@ -692,7 +692,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
         while(neighborIndex < frontVertex->NumNeighbors) {
 
-          nextNeighbor = frontVertex->Neighbors[NeighborOrder[neighborIndex]];
+          nextNeighbor = frontVertex->Neighbors[neighborIndex];
 
           if(nextNeighbor == NULL){
             neighborIndex++;
@@ -768,7 +768,6 @@ PrintPath(int N, int *grid, LIST *Path){
 
 int
 CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
-  static const int NeighborOrderA[] = {0,1,2,3}; // assume the first neighbor visited determines the resulting path found. There are 24 possible neighbor orders. We are only trying 4 of these.
 
   int numsteps;
 
@@ -786,7 +785,7 @@ CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
   CreateGraphFromGrid(grid, N, GridPoints, Vertices, &GridGraph);
 
   // Find the cheapest path
-  GetCheapestPath(&GridGraph, N, start, end, &pathStack, NeighborOrderA);
+  GetCheapestPath(&GridGraph, N, start, end, &pathStack);
   PrintPath(N, grid, &pathStack);
   numsteps = GetNumPathSteps(&pathStack);
 
