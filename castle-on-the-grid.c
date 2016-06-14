@@ -673,12 +673,18 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
   // todo: add asserts where needed. e.g. for alloc fails.
 
   while(!done && !IsEmpty(&vertexQueue)){
-    PrintPQEntries(&vertexQueue); // debugging.
+    //PrintPQEntries(&vertexQueue); // debugging.
     PQEntry = Dequeue(&vertexQueue);
     frontVertex = PQEntry->Vertex;
 
     if(!frontVertex->IsVisited) {
+
       frontVertex->IsVisited = 1;
+      if(frontVertex->previousVertex != NULL){
+        if(PQEntry->Cost >= frontVertex->PathCost) {
+          printf("Overwriting with more expensive path.\n");
+        }
+      }
       frontVertex->PathCost = PQEntry->Cost;
       frontVertex->previousVertex = PQEntry->PrevVertex;
 
@@ -686,6 +692,8 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
       if(frontVertex == endVertex) {
         done = 1;
+        printf("Hit End.\n");
+        //PrintPQEntries(&vertexQueue);
       } else {
 
         neighborIndex = 0;
@@ -705,6 +713,12 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
             TmpCost += frontVertex->PathCost;
             PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
             PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
+          } else if((TmpCost + frontVertex->PathCost) <= nextNeighbor->PathCost /*&& nextNeighbor->previousVertex != frontVertex*/) {
+            //printf("Cheaper path neighbor.\n");
+            nextNeighbor->IsVisited = 0;
+            TmpCost += frontVertex->PathCost;
+            PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
+            PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
           }
 
           neighborIndex++;
@@ -712,17 +726,27 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
     }
 
+    } else { // if(!frontVertex->IsVisited)
+      //
+      if(frontVertex->PathCost >= PQEntry->Cost /*&& frontVertex->previousVertex != PQEntry->PrevVertex*/) {
+        // frontVertex has already been visited, but from a different predecessor other than PQEntry->PrevVertex.
+        // We can reach front vertex from PQEntry->PrevVertex in less or equal steps than is currently recorded.
+         //printf("Cheaper path.\n");
+         frontVertex->IsVisited = 0;
+         PriorityEnqueue(&vertexQueue, PQEntry, PQEntry->Cost);
+      }
     }
   }
 
+  printf("%d\n", endVertex->PathCost);
   // Add each vertex along the path to the pathStack starting from the end to the beginning.
 
-  while(endVertex != NULL){
-    //PrintNeighbors(endVertex);
+  // while(endVertex != NULL){ // causes infinite loop on real test4
+  //   //PrintNeighbors(endVertex);
 
-    Push(pathStack, endVertex);
-    endVertex = endVertex->previousVertex;
-  }
+  //   Push(pathStack, endVertex);
+  //   endVertex = endVertex->previousVertex;
+  // }
 
 }
 
@@ -786,10 +810,10 @@ CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
 
   // Find the cheapest path
   GetCheapestPath(&GridGraph, N, start, end, &pathStack);
-  PrintPath(N, grid, &pathStack);
-  numsteps = GetNumPathSteps(&pathStack);
+  //PrintPath(N, grid, &pathStack);
+  //numsteps = GetNumPathSteps(&pathStack);
 
-  printf("%d\n", numsteps);
+  // /printf("%d\n", numsteps);
 
   // todo: free mem.
 
@@ -851,7 +875,7 @@ We never go thrugh 1,2 2,2 3,2 for test6
 **/
 
 int
-main(void) {
+main() {
   char lines[100][102]; // 102 = 100 + \n + \0
   int N = 3;
 
