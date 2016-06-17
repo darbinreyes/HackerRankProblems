@@ -28,6 +28,8 @@ To implement get cheapest path we need a priority queue.
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_GRID_SIZE 100
+
 // we need a list to use as queue in the shortest path algo.
 
 struct _LIST_NODE {
@@ -209,7 +211,7 @@ struct _VERTEX {
   struct _VERTEX *previousVertex;
   int PathCost;
   int IsVisited;
-  struct _VERTEX *Neighbors[8]; // not using edge since unweighted. At most 8 neighbors if moving diagonal is allowed. For now assuming diagonal is not allowed.
+  struct _VERTEX *Neighbors[(MAX_GRID_SIZE-1) << 1]; // not using edge struct. since graph is unweighted. At most a vertex has (N-1)*2 neighbors.
   int NumNeighbors;
 };
 
@@ -376,14 +378,14 @@ AddNeighbor(int *grid,  int N, int i, int j, VERTEX *Vertex, VERTEX *Vertices) {
 
 
   if(i < 0 || i >= N || j < 0 || j >= N) { // invalid neighbor index.
-    Vertex->Neighbors[Vertex->NumNeighbors++] = NULL;
+    //Vertex->Neighbors[Vertex->NumNeighbors++] = NULL;
     return 1;
   }
 
   NeighborLabel = i*N + j; // Compute neighbor index from its x,y position in the grid.
 
   if(grid[NeighborLabel] == 0) {// grid[NeighborLabel] == 0, this neighbor is a forbidden cell. Don't add this cell as neighbor to Vertex.
-    Vertex->Neighbors[Vertex->NumNeighbors++] = NULL;
+    //Vertex->Neighbors[Vertex->NumNeighbors++] = NULL;
     return 1;
   }
 
@@ -395,7 +397,7 @@ AddNeighbor(int *grid,  int N, int i, int j, VERTEX *Vertex, VERTEX *Vertices) {
 // creates a graph based on grid.
 int
 CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAPH  *GridGraph) {
-  int i, j, vertexlabel; // TODO: rename to VertexIndex
+  int i, j, vertexlabel, offset; // TODO: rename to VertexIndex
 
   for(i = 0; i < N; i++){
     for(j = 0; j < N; j++) {
@@ -411,17 +413,29 @@ CreateGraphFromGrid(int *grid, int N, POINT  *GridPoints, VERTEX *Vertices, GRAP
       if(grid[vertexlabel]) {
         // connect this vertex with its neighbors. // assume you cant move diagonally.
 
-        //  neighbor above
-        AddNeighbor(grid, N, i-1, j, &Vertices[vertexlabel], Vertices);
+        //  neighbors above
+        offset = 1;
+        while(AddNeighbor(grid, N, i-offset, j, &Vertices[vertexlabel], Vertices) == 0) {
+          offset++;
+        }
 
-         // neighbor below
-        AddNeighbor(grid, N, i+1, j, &Vertices[vertexlabel], Vertices);
+         // neighbors below
+        offset = 1;
+        while(AddNeighbor(grid, N, i+offset, j, &Vertices[vertexlabel], Vertices) == 0) {
+          offset++;
+        }
 
-         // neighbor to left
-        AddNeighbor(grid, N, i, j-1, &Vertices[vertexlabel], Vertices);
+         // neighbors to left
+        offset = 1;
+        while(AddNeighbor(grid, N, i, j-offset, &Vertices[vertexlabel], Vertices) == 0) {
+          offset++;
+        }
 
          // neighbor to right
-        AddNeighbor(grid, N, i, j+1, &Vertices[vertexlabel], Vertices);
+        offset = 1;
+        while(AddNeighbor(grid, N, i, j+offset, &Vertices[vertexlabel], Vertices) == 0) {
+          offset++;
+        }
 
       }
     }
@@ -634,6 +648,7 @@ GetShortestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
   // todo: free queue nodes mem.
 
   // Add each vertex along the path to the pathStack starting from the end to the beginning.
+  printf("%d", endVertex->PathCost);
 
   while(endVertex != NULL){
     //PrintNeighbors(endVertex);
@@ -678,13 +693,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
     frontVertex = PQEntry->Vertex;
 
     if(!frontVertex->IsVisited) {
-
       frontVertex->IsVisited = 1;
-      if(frontVertex->previousVertex != NULL){
-        if(PQEntry->Cost >= frontVertex->PathCost) {
-          printf("Overwriting with more expensive path.\n");
-        }
-      }
       frontVertex->PathCost = PQEntry->Cost;
       frontVertex->previousVertex = PQEntry->PrevVertex;
 
@@ -692,7 +701,7 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
       if(frontVertex == endVertex) {
         done = 1;
-        printf("Hit End.\n");
+        // printf("Hit End.\n");
         //PrintPQEntries(&vertexQueue);
       } else {
 
@@ -702,23 +711,15 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
           nextNeighbor = frontVertex->Neighbors[neighborIndex];
 
-          if(nextNeighbor == NULL){
-            neighborIndex++;
-            continue;
-          }
-
           TmpCost = GetStepCost(frontVertex->previousVertex, frontVertex, nextNeighbor);
 
           if(!nextNeighbor->IsVisited) {
             TmpCost += frontVertex->PathCost;
             PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
             PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
-          } else if((TmpCost + frontVertex->PathCost) <= nextNeighbor->PathCost /*&& nextNeighbor->previousVertex != frontVertex*/) {
-            //printf("Cheaper path neighbor.\n");
-            nextNeighbor->IsVisited = 0;
-            TmpCost += frontVertex->PathCost;
-            PQEntry = NewPriorityQueueEntry(frontVertex, TmpCost, nextNeighbor);
-            PriorityEnqueue(&vertexQueue, PQEntry, TmpCost);
+          } else {
+            if(TmpCost + frontVertex->PathCost  < nextNeighbor->PathCost)
+              printf("Cheaper path.\n");
           }
 
           neighborIndex++;
@@ -726,27 +727,21 @@ GetCheapestPath(GRAPH *graph, int N, POINT *startPoint, POINT *endPoint, LIST *p
 
     }
 
-    } else { // if(!frontVertex->IsVisited)
-      //
-      if(frontVertex->PathCost >= PQEntry->Cost /*&& frontVertex->previousVertex != PQEntry->PrevVertex*/) {
-        // frontVertex has already been visited, but from a different predecessor other than PQEntry->PrevVertex.
-        // We can reach front vertex from PQEntry->PrevVertex in less or equal steps than is currently recorded.
-         //printf("Cheaper path.\n");
-         frontVertex->IsVisited = 0;
-         PriorityEnqueue(&vertexQueue, PQEntry, PQEntry->Cost);
-      }
+    } else {
+      if(PQEntry->Cost < frontVertex->PathCost)
+        printf("Cheaper path.\n");
     }
   }
 
   printf("%d\n", endVertex->PathCost);
   // Add each vertex along the path to the pathStack starting from the end to the beginning.
 
-  // while(endVertex != NULL){ // causes infinite loop on real test4
-  //   //PrintNeighbors(endVertex);
+  while(endVertex != NULL){ // causes infinite loop on real test4
+    //PrintNeighbors(endVertex);
 
-  //   Push(pathStack, endVertex);
-  //   endVertex = endVertex->previousVertex;
-  // }
+    Push(pathStack, endVertex);
+    endVertex = endVertex->previousVertex;
+  }
 
 }
 
@@ -809,11 +804,13 @@ CastleOnGrid(int N, int *grid, POINT *start, POINT *end) {
   CreateGraphFromGrid(grid, N, GridPoints, Vertices, &GridGraph);
 
   // Find the cheapest path
-  GetCheapestPath(&GridGraph, N, start, end, &pathStack);
+  //GetCheapestPath(&GridGraph, N, start, end, &pathStack);
+  GetShortestPath(&GridGraph, N, start, end, &pathStack);
+
   //PrintPath(N, grid, &pathStack);
   //numsteps = GetNumPathSteps(&pathStack);
 
-  // /printf("%d\n", numsteps);
+  //printf("%d\n", numsteps);
 
   // todo: free mem.
 
@@ -871,7 +868,15 @@ Theories.
 -Found a way to shave off one step in test5.txt. Go down from origin.
 
 -Next: step through cheapest path algo. on paper to spot bug.
-We never go thrugh 1,2 2,2 3,2 for test6
+We never go thrugh 1,2 2,2 3,2 for test6.
+
+## New Approach.
+
+Instead of computing the cost of an edge based on the two previous vertices's
+along a path, connect in a way that captures the straight line = one step part of the
+problem. We can connect (i,j) to all neighbors in the i and j direction. This approach
+is allot simpler and works just as good. Real test 11 still fails though.
+
 **/
 
 int
